@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="tomcatant" basedir=".">
+
+	<property name="tomcat.home" value="D:\tools\apache-tomcat-8.5.37" />
+	<property name="deploy.path" value="D:\tools\apache-tomcat-8.5.37\webapps" />
+	<property name="src.dir" value="src" />
+	<property name="web.dir" value="web" />
+	<property name="build.dir" value="${web.dir}/WEB-INF/classes" />
+	<property name="name" value="springMvc" />
+	<target name="tomcat-install">
+		<delete>
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+			</fileset>
+		</delete>
+
+		<java classname="org.apache.catalina.startup.Bootstrap" fork="true">
+			<classpath path="${tomcat.home}/bin/bootstrap.jar:${tomcat.home}/bin/tomcat-juli.jar" />
+			<jvmarg value="-Dcatalina.home=${tomcat.home}" />
+			<arg line="stop" />
+		</java>
+
+		<path id="master-classpath">
+			<fileset dir="${web.dir}/WEB-INF/lib">
+				<include name="*.jar" />
+			</fileset>
+
+			<pathelement path="${build.dir}" />
+		</path>
+
+		<mkdir dir="${build.dir}" />
+
+		<javac destdir="${build.dir}" source="1.8" target="1.8" debug="true" deprecation="false" optimize="false" failonerror="true">
+			<src path="${src.dir}" />
+			<classpath refid="master-classpath" />
+		</javac>
+
+		<war destfile="${name}.war" webxml="${web.dir}/WEB-INF">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</war>
+
+		<copy todir="${deploy.path}" preservelastmodified="true">
+			<fileset dir=".">
+				<include name="*.war" />
+			</fileset>
+		</copy>
+
+		<java classname="org.apache.catalina.startup.Bootstrap" fork="true">
+			<classpath path="${tomcat.home}/bin/bootstrap.jar:${tomcat.home}/bin/tomcat-juli.jar" />
+			<jvmarg value="-Dcatalina.home=${tomcat.home}" />
+		</java>
+
+		<target name="create-db" depends="init, start-db" description="Create database tables and populate values">
+			<sql driver="${db.driver}" url="${db.url}" user="${db.user}" password="${db.password}" delimiter="${db.delimiter}">
+				<transaction src="CREATE TABLE todo(id int, tasks varchar50, status varchar20, due_date varchar50 )"/>
+			</sql>
+		</target>
+	</target>
+</project>
